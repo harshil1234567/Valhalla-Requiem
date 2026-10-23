@@ -1,0 +1,30 @@
+server:
+  port: ${PORT:8080}
+  servlet:
+    session:
+      cookie:
+        http-only: true
+        secure: ${SESSION_COOKIE_SECURE:false}
+        same-site: lax
+      timeout: 12h
+spring:
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/valhalla}
+    username: ${DATABASE_USERNAME:valhalla}
+    password: ${DATABASE_PASSWORD:requiem_dev}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  jackson:
+    default-property-inclusion: non_null
+app:
+  steam-callback-url: ${STEAM_CALLBACK_URL:http://localhost:8080/api/auth/steam/callback}
+  frontend-url: ${FRONTEND_URL:http://localhost:5173/}
+  minimum-playtime-minutes: ${MINIMUM_PLAYTIME_MINUTES:60}
+steam:
+  api-key: ${STEAM_API_KEY:}
