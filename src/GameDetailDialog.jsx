@@ -6,7 +6,7 @@ function plainText(markup) {
   return new DOMParser().parseFromString(markup, 'text/html').body.textContent?.trim() || '';
 }
 
-function GameDetailDialog({ game, details, detailsLoading, detailsUnavailable, verified, reviewMode, setReviewMode, onClose, onVerify, onSubmitReview, rating, setRating, reviewText, setReviewText, playerStats, statsLoading, statsUnavailable }) {
+function GameDetailDialog({ game, details, detailsLoading, detailsUnavailable, verified, reviewMode, setReviewMode, onClose, onVerify, verificationMessage, steamConnecting, onSubmitReview, rating, setRating, reviewText, setReviewText, playerStats, statsLoading, statsUnavailable }) {
   const description = plainText(details?.description) || details?.shortDescription || game.excerpt;
   const unlocked = playerStats?.achievements?.filter((achievement) => achievement.achieved) || [];
 
@@ -68,7 +68,7 @@ function GameDetailDialog({ game, details, detailsLoading, detailsUnavailable, v
               <label className="form-label" htmlFor="review-body">Your testimony <span>OPTIONAL</span></label>
               <textarea id="review-body" value={reviewText} onChange={(event) => setReviewText(event.target.value)} maxLength={1500} placeholder="What will you remember about this journey?" rows="5" />
               <div className="form-bottom"><span>{reviewText.length}/1500</span><button className="primary-button" type="submit" disabled={!rating}>Inscribe review <ArrowRight size={15} /></button></div>
-            </form> : <div className="detail-verify-prompt"><ShieldCheck size={22} /><p>Connect Steam and verify at least 60 minutes played before rating this title.</p><button className="primary-button" onClick={onVerify}>Verify with Steam <ArrowRight size={14} /></button></div>}
+            </form> : <div className="detail-verify-prompt"><ShieldCheck size={22} /><p>Connect Steam and verify at least 60 minutes played before rating this title.</p><button className="primary-button" onClick={onVerify} disabled={steamConnecting}>{steamConnecting ? 'Connecting to Steam...' : <>Verify with Steam <ArrowRight size={14} /></>}</button>{verificationMessage && <p className="verification-message" role="status">{verificationMessage}</p>}</div>}
           </aside>
         </div>
       </section>

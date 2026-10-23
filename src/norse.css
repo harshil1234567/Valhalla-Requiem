@@ -489,6 +489,88 @@ body {
   width: 100%;
 }
 
+.detail-verify-prompt .primary-button:disabled,
+.steam-button:disabled {
+  cursor: wait;
+  opacity: .75;
+}
+
+.verification-message {
+  margin: 0;
+  color: #dfc88e;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.steam-library-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 16px;
+}
+
+.steam-library-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid rgba(187, 200, 188, .2);
+  background: linear-gradient(150deg, rgba(39, 51, 46, .7), rgba(14, 19, 18, .5));
+  color: #e7e4da;
+  text-decoration: none;
+  transition: border-color .18s ease, transform .18s ease;
+}
+
+.steam-library-card:hover {
+  transform: translateY(-3px);
+  border-color: #c39a5d;
+}
+
+.steam-library-card img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  background: #111817;
+}
+
+.steam-library-copy {
+  min-height: 76px;
+  padding: 11px 12px;
+}
+
+.steam-library-copy h3 {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0 0 8px;
+  color: #f0eee5;
+  font: 600 12px/1.4 var(--display);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.steam-library-copy span,
+.library-pagination > span {
+  color: #aeb7af;
+  font: 9px var(--mono);
+}
+
+.library-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-top: 28px;
+}
+
+.library-pagination .category {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.library-pagination .category:disabled {
+  cursor: not-allowed;
+  opacity: .45;
+}
+
 @media (max-width: 720px) {
   .detail-backdrop {
     padding: 8px;

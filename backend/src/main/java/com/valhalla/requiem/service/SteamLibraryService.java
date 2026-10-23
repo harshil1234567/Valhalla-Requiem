@@ -27,7 +27,7 @@ public class SteamLibraryService {
         return !apiKey.isBlank();
     }
 
-    public List<OwnedGame> getVerifiedGames(String steamId) {
+    public List<OwnedGame> getOwnedGames(String steamId) {
         if (apiKey.isBlank()) {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Steam API key is not configured");
         }
@@ -42,7 +42,11 @@ public class SteamLibraryService {
         if (response == null || response.response() == null || response.response().games() == null) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Steam library is private or unavailable");
         }
-        return response.response().games().stream()
+        return response.response().games();
+    }
+
+    public List<OwnedGame> getVerifiedGames(List<OwnedGame> ownedGames) {
+        return ownedGames.stream()
                 .filter(game -> game.playtimeForever() >= minimumPlaytimeMinutes)
                 .toList();
     }

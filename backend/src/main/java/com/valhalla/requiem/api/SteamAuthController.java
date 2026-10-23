@@ -39,6 +39,10 @@ public class SteamAuthController {
 
     @GetMapping("/start")
     public void start(HttpServletResponse response) throws IOException {
+        if (!library.isConfigured()) {
+            redirectToFrontend(response, "not-configured");
+            return;
+        }
         response.sendRedirect(openId.getLoginUri(callbackUrl).toString());
     }
 
@@ -49,15 +53,27 @@ public class SteamAuthController {
                     .filter(entry -> entry.getValue() != null && entry.getValue().length > 0)
                     .collect(java.util.stream.Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue()[0]));
             String steamId = openId.verify(parameters, callbackUrl);
-            List<Integer> verifiedAppIds = library.getVerifiedGames(steamId).stream()
+            List<SteamLibraryService.OwnedGame> ownedGames = library.getOwnedGames(steamId);
+            List<Integer> verifiedAppIds = library.getVerifiedGames(ownedGames).stream()
                     .map(SteamLibraryService.OwnedGame::appId).toList();
             users.findById(steamId).orElseGet(() -> users.save(new AppUser(steamId)));
             request.changeSessionId();
             session.setAttribute("steamId", steamId);
             session.setAttribute("verifiedGames", verifiedAppIds);
-            response.sendRedirect(URI.create(frontendUrl).resolve("?steam=verified").toString());
+            session.setAttribute("steamLibrary", ownedGames);
+            redirectToFrontend(response, "verified");
         } catch (ResponseStatusException exception) {
-            response.sendRedirect(URI.create(frontendUrl).resolve("?steam=error").toString());
+            String result = switch (exception.getStatusCode().value()) {
+                case 403 -> "private-library";
+                case 502 -> "steam-unavailable";
+                case 503 -> "not-configured";
+                default -> "error";
+            };
+            redirectToFrontend(response, result);
         }
+    }
+
+    private void redirectToFrontend(HttpServletResponse response, String result) throws IOException {
+        response.sendRedirect(URI.create(frontendUrl).resolve("?steam=" + result).toString());
     }
 }

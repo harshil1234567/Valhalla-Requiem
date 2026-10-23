@@ -22,6 +22,7 @@ import org.springframework.web.server.ResponseStatusException;
 public class GameController {
     private static final String STEAM_ID = "steamId";
     private static final String VERIFIED_GAMES = "verifiedGames";
+    private static final String STEAM_LIBRARY = "steamLibrary";
     private final GameRepository games;
     private final ReviewRepository reviews;
     private final SteamLibraryService steamLibrary;
@@ -49,6 +50,19 @@ public class GameController {
         List<Integer> appIds = (List<Integer>) session.getAttribute(VERIFIED_GAMES);
         if (appIds == null || appIds.isEmpty()) return List.of();
         return games.findAll().stream().filter(game -> appIds.contains(Integer.valueOf(game.getSteamAppId()))).toList();
+    }
+
+    @GetMapping("/me/steam-library")
+    public List<SteamLibraryEntry> getSteamLibrary(HttpSession session) {
+        if (session.getAttribute(STEAM_ID) == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Connect a verified Steam account first");
+        }
+        @SuppressWarnings("unchecked")
+        List<SteamLibraryService.OwnedGame> ownedGames =
+                (List<SteamLibraryService.OwnedGame>) session.getAttribute(STEAM_LIBRARY);
+        return ownedGames == null ? List.of() : ownedGames.stream()
+                .map(game -> new SteamLibraryEntry(game.appId(), game.name(), game.playtimeForever()))
+                .toList();
     }
 
     @GetMapping("/games/{gameId}/steam-stats")
@@ -90,4 +104,6 @@ public class GameController {
             if (body != null && body.length() > 1500) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Review is too long");
         }
     }
+
+    public record SteamLibraryEntry(int appId, String name, int playtimeMinutes) { }
 }

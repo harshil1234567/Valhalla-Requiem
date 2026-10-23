@@ -27,7 +27,7 @@ The Vite development server proxies `/api` to `http://localhost:8080`. In local 
 
 The API reads these variables:
 
-- `STEAM_API_KEY`: required for owned-game verification.
+- `STEAM_API_KEY`: Steam Web API key required for owned-game verification and player stats. Keep it server-side; never put it in frontend code or API URLs shared with users.
 - `STEAM_CALLBACK_URL`: OpenID return URL; default is the local callback.
 - `FRONTEND_URL`: location users return to after Steam verification.
 - `MINIMUM_PLAYTIME_MINUTES`: minimum recorded playtime; defaults to 60.
@@ -39,7 +39,9 @@ The API reads these variables:
 
 ## Provider verification scope
 
-Steam verification is implemented server-side. The API never trusts a Steam ID or game ID sent from the browser: it validates Steam's OpenID assertion, verifies its callback and nonce, fetches the account's owned games with the Steam Web API, and keeps eligible Steam app IDs in the server session. Review creation checks that server-side list and enforces one review per Steam account per game.
+Steam verification is implemented server-side. The API never trusts a Steam ID or game ID sent from the browser: it validates Steam's OpenID assertion, verifies its callback and nonce, fetches the account's owned games with the Steam Web API, and keeps the full returned library and eligible Steam app IDs in the server session. `GET /api/me/steam-library` returns the complete library visible to Steam for the signed-in account; the website's **My library** view lists those games, including games below the review playtime threshold. Review creation checks the server-side eligible-game list and enforces one review per Steam account per game.
+
+The **Steam catalog** view uses the public `ISteamApps/GetAppList/v2` endpoint via `GET /api/steam/apps`. The backend caches this global app list in memory for six hours; the browser fetches it only when the catalog view is opened and provides name search and pagination. Catalog entries link to their Steam Store page. The global catalog is distinct from **My library**, which contains only games owned by the signed-in account.
 
 For an eligible game, `GET /api/games/{gameId}/steam-stats` calls Steam's `ISteamUserStats/GetUserStatsForGame` endpoint using the signed-in account ID and server-side API key. It returns available player stats and achievements for display in the review dialog. The route requires the game to be in that session's verified-play list. Stats can be private or unavailable; that does not invalidate ownership/playtime verification or prevent an otherwise eligible review.
 
