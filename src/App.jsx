@@ -107,7 +107,6 @@ function App() {
       setRating(0);
     } catch (error) { setNotice(error.message); }
   };
-
   return (
     <div className="app-shell">
       <header className="topbar">
