@@ -23,6 +23,8 @@ Do not open `index.html` with VS Code Live Server. This is a Vite/React source p
 
 The Vite development server proxies `/api` to `http://localhost:8080`. In local development, Steam returns to `http://localhost:8080/auth/steam/callback`; the legacy `/api/auth/steam/callback` route remains available. For a deployed site, serve the frontend and API behind the same HTTPS origin or configure the frontend proxy and `STEAM_CALLBACK_URL` / `FRONTEND_URL` accordingly. Set `SESSION_COOKIE_SECURE=true` in HTTPS deployments.
 
+On Vercel, `api/steam-store.js` serves Steam Store descriptions and screenshot URLs from a same-origin serverless function, so those details work without direct browser access to Steam's API. The frontend still prefers the Spring API details endpoint when it is available.
+
 ## Environment
 
 The API reads these variables:

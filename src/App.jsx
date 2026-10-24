@@ -114,11 +114,31 @@ function App() {
     if (!dialogGame) return undefined;
     const controller = new AbortController();
     setDetailsLoading(true);
-    fetch(`/api/games/${dialogGame.id}/details`, { signal: controller.signal })
-      .then((response) => response.ok ? response.json() : Promise.reject(new Error('Store details unavailable')))
-      .then((data) => setStoreDetails(data))
-      .catch((error) => { if (error.name !== 'AbortError') setDetailsUnavailable(true); })
-      .finally(() => { if (!controller.signal.aborted) setDetailsLoading(false); });
+    const loadDetails = async () => {
+      try {
+        let details = null;
+        try {
+          const response = await fetch(`/api/games/${dialogGame.id}/details`, { signal: controller.signal });
+          if (response.ok) details = await response.json();
+        } catch (error) {
+          if (error.name === 'AbortError') throw error;
+        }
+
+        if (!details) {
+          const appId = dialogGame.appId || dialogGame.steamAppId;
+          if (!appId) throw new Error('Steam app ID is unavailable');
+          const response = await fetch(`/api/steam-store?appid=${encodeURIComponent(appId)}`, { signal: controller.signal });
+          if (!response.ok) throw new Error('Steam Store details unavailable');
+          details = await response.json();
+        }
+        setStoreDetails(details);
+      } catch (error) {
+        if (error.name !== 'AbortError') setDetailsUnavailable(true);
+      } finally {
+        if (!controller.signal.aborted) setDetailsLoading(false);
+      }
+    };
+    loadDetails();
     return () => controller.abort();
   }, [dialogGame]);
 
