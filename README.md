@@ -1,17 +1,17 @@
 # Valhalla Requiem
 
-Valhalla Requiem is a player-verified game rating and review hall. A rating is accepted only when the signed-in player owns the corresponding Steam game and has at least 60 minutes of recorded Steam playtime. The React client is backed by a Java 21 / Spring Boot API and PostgreSQL.
+Valhalla Requiem is a player-verified game rating and review hall. A rating is accepted only when the signed-in player owns the corresponding Steam game and has at least 60 minutes of recorded Steam playtime. The React client is backed by a Java 25 / Spring Boot API and PostgreSQL.
 
 ## Stack
 
 - React 19, Vite, and Lucide icons
-- Java 21, Spring Boot 3.4, Spring Data JPA
+- Java 25, Spring Boot 3.5, Spring Data JPA
 - PostgreSQL 16
 - Steam OpenID sign-in plus Steam `GetOwnedGames` verification
 
 ## Run locally
 
-Prerequisites: Node.js 20+, npm, Java 21, Maven 3.9+, and Docker Desktop (or a local PostgreSQL 16 instance).
+Prerequisites: Node.js 20+, npm, Java 25, Maven 3.9+, and Docker Desktop (or a local PostgreSQL 16 instance).
 
 1. Set `STEAM_API_KEY` in your shell (or configure the variables from `.env.example` in your IDE run configuration). Get a Steam Web API key from Steam Community's Web API key page. Spring Boot does not automatically read `.env`; never commit a real key.
 2. Start PostgreSQL: `docker compose up -d postgres`.
@@ -21,13 +21,13 @@ Prerequisites: Node.js 20+, npm, Java 21, Maven 3.9+, and Docker Desktop (or a l
 
 Do not open `index.html` with VS Code Live Server. This is a Vite/React source project: Live Server does not compile JSX or process the CSS imports, so the app cannot mount. If it is opened statically, the page now displays this launch instruction instead of appearing blank.
 
-The Vite development server proxies `/api` to `http://localhost:8080`. In local development, Steam must be able to return to `http://localhost:8080/api/auth/steam/callback`. For a deployed site, serve the frontend and API behind the same HTTPS origin or configure the frontend proxy and `STEAM_CALLBACK_URL` / `FRONTEND_URL` accordingly. Set `SESSION_COOKIE_SECURE=true` in HTTPS deployments.
+The Vite development server proxies `/api` to `http://localhost:8080`. In local development, Steam returns to `http://localhost:8080/auth/steam/callback`; the legacy `/api/auth/steam/callback` route remains available. For a deployed site, serve the frontend and API behind the same HTTPS origin or configure the frontend proxy and `STEAM_CALLBACK_URL` / `FRONTEND_URL` accordingly. Set `SESSION_COOKIE_SECURE=true` in HTTPS deployments.
 
 ## Environment
 
 The API reads these variables:
 
-- `STEAM_API_KEY`: Steam Web API key required for owned-game verification and player stats. Keep it server-side; never put it in frontend code or API URLs shared with users.
+- `STEAM_API_KEY`: Steam Web API key required for the global app catalog, owned-game verification, and player stats. Keep it server-side; never put it in frontend code or API URLs shared with users.
 - `STEAM_CALLBACK_URL`: OpenID return URL; default is the local callback.
 - `FRONTEND_URL`: location users return to after Steam verification.
 - `MINIMUM_PLAYTIME_MINUTES`: minimum recorded playtime; defaults to 60.
@@ -39,9 +39,9 @@ The API reads these variables:
 
 ## Provider verification scope
 
-Steam verification is implemented server-side. The API never trusts a Steam ID or game ID sent from the browser: it validates Steam's OpenID assertion, verifies its callback and nonce, fetches the account's owned games with the Steam Web API, and keeps the full returned library and eligible Steam app IDs in the server session. `GET /api/me/steam-library` returns the complete library visible to Steam for the signed-in account; the website's **My library** view lists those games, including games below the review playtime threshold. Review creation checks the server-side eligible-game list and enforces one review per Steam account per game.
+Steam OpenID 2.0 sign-in is implemented server-side. `GET /auth/steam` redirects to Steam, and `GET /auth/steam/callback` validates the returned assertion with a server-to-server `check_authentication` POST before establishing the session. The existing `/api/auth/steam/start` and `/api/auth/steam/callback` routes remain available for the frontend. The API never trusts a Steam ID or game ID sent from the browser: it validates Steam's signed identity, callback, nonce, and replay status, then fetches the account's owned games with the Steam Web API and keeps the full returned library and eligible Steam app IDs in the server session. `GET /api/me/steam-library` returns the complete library visible to Steam for the signed-in account; the website's **My library** view lists those games, including games below the review playtime threshold. Review creation checks the server-side eligible-game list and enforces one review per Steam account per game.
 
-The **Steam catalog** view uses the public `ISteamApps/GetAppList/v2` endpoint via `GET /api/steam/apps`. The backend caches this global app list in memory for six hours; the browser fetches it only when the catalog view is opened and provides name search and pagination. Catalog entries link to their Steam Store page. The global catalog is distinct from **My library**, which contains only games owned by the signed-in account.
+The **Steam catalog** view uses the `IStoreService/GetAppList` endpoint via `GET /api/steam/apps`. Steam requires a valid Web API key for this endpoint. The backend retrieves the full catalog in cursor-paginated batches and caches it in memory for six hours; the browser fetches it only when the catalog view is opened and provides name search and pagination. Catalog entries link to their Steam Store page. The global catalog is distinct from **My library**, which contains only games owned by the signed-in account.
 
 For an eligible game, `GET /api/games/{gameId}/steam-stats` calls Steam's `ISteamUserStats/GetUserStatsForGame` endpoint using the signed-in account ID and server-side API key. It returns available player stats and achievements for display in the review dialog. The route requires the game to be in that session's verified-play list. Stats can be private or unavailable; that does not invalidate ownership/playtime verification or prevent an otherwise eligible review.
 

@@ -23,7 +23,7 @@ spring:
   jackson:
     default-property-inclusion: non_null
 app:
-  steam-callback-url: ${STEAM_CALLBACK_URL:http://localhost:8080/api/auth/steam/callback}
+  steam-callback-url: ${STEAM_CALLBACK_URL:http://localhost:8080/auth/steam/callback}
   frontend-url: ${FRONTEND_URL:http://localhost:5173/}
   minimum-playtime-minutes: ${MINIMUM_PLAYTIME_MINUTES:60}
 steam:

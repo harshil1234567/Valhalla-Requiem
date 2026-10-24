@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.server.ResponseStatusException;
 
 @Controller
-@RequestMapping("/api/auth/steam")
+@RequestMapping({"/api/auth/steam", "/auth/steam"})
 public class SteamAuthController {
     private final SteamOpenIdService openId;
     private final SteamLibraryService library;
@@ -37,12 +37,8 @@ public class SteamAuthController {
         this.frontendUrl = frontendUrl;
     }
 
-    @GetMapping("/start")
+    @GetMapping({"", "/start"})
     public void start(HttpServletResponse response) throws IOException {
-        if (!library.isConfigured()) {
-            redirectToFrontend(response, "not-configured");
-            return;
-        }
         response.sendRedirect(openId.getLoginUri(callbackUrl).toString());
     }
 
@@ -53,12 +49,14 @@ public class SteamAuthController {
                     .filter(entry -> entry.getValue() != null && entry.getValue().length > 0)
                     .collect(java.util.stream.Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue()[0]));
             String steamId = openId.verify(parameters, callbackUrl);
+            request.changeSessionId();
+            session.setAttribute("steamId", steamId);
+            session.setAttribute("verifiedGames", List.of());
+            session.setAttribute("steamLibrary", List.of());
+            users.findById(steamId).orElseGet(() -> users.save(new AppUser(steamId)));
             List<SteamLibraryService.OwnedGame> ownedGames = library.getOwnedGames(steamId);
             List<Integer> verifiedAppIds = library.getVerifiedGames(ownedGames).stream()
                     .map(SteamLibraryService.OwnedGame::appId).toList();
-            users.findById(steamId).orElseGet(() -> users.save(new AppUser(steamId)));
-            request.changeSessionId();
-            session.setAttribute("steamId", steamId);
             session.setAttribute("verifiedGames", verifiedAppIds);
             session.setAttribute("steamLibrary", ownedGames);
             redirectToFrontend(response, "verified");

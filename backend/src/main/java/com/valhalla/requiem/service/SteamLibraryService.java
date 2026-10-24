@@ -34,7 +34,7 @@ public class SteamLibraryService {
         SteamResponse response;
         try {
             response = restClient.get()
-                    .uri("https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key={key}&steamid={steamId}&include_appinfo=true&include_played_free_games=true&format=json", apiKey, steamId)
+                    .uri("https://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key={key}&steamid={steamId}&include_appinfo=true&include_played_free_games=true&format=json", apiKey, steamId)
                     .retrieve().body(SteamResponse.class);
         } catch (Exception exception) {
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Steam library could not be checked", exception);

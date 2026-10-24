@@ -88,6 +88,7 @@ function App() {
     setSteamCatalogError('');
     fetch('/api/steam/apps')
       .then((response) => {
+        if (response.status === 503) throw new Error('The global Steam catalog needs a real STEAM_API_KEY. Add it to the backend environment, restart the backend, and retry.');
         if (!response.ok) throw new Error('Steam’s public app catalog could not be loaded. Check the backend connection and retry.');
         return response.json();
       })
